@@ -56,6 +56,18 @@ Config.Locations = {
 Customize crafting recipes, durations, and required items as needed.
 
 ---
+## Drop this into your 'qb-core/shared/jobs.lua' :
+
+    juicebar = {
+        label = "Juice Bar",
+        defaultDuty = false,
+        offDutyPay = false,
+        grades = {
+            ['0'] = { name = "Employee", payment = 50 },
+            ['1'] = { name = "Manager", isboss = true, payment = 100 }
+        }
+    },
+
 
 ## Shared Items (to add in `qb-core/shared/items.lua`)
 
