@@ -98,8 +98,7 @@ Customize crafting recipes, durations, and required items as needed.
 
 ## Credits
 
-* Developed by \[YourNameHere or TeamName]
-* UI & Icons by \[Designer if applicable]
+* Developed by GrossBean
 * Map & prop work by contributors listed in `stream/`
 * Thanks to the QBCore community for support
 
