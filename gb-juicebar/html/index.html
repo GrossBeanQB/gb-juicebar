@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Groovy Juice Bar</title>
+  <style>
+    /* ========== Common Styles ========== */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      background-color: transparent;
+    }
+
+    /* Container for Both Menus */
+    .cutting-menu,
+    .juice-menu {
+      position: absolute;
+      top: 50%;
+      left: 58%;
+      transform: translate(-50%, -50%);
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      color: white;
+      min-width: 400px;
+      max-width: 500px;
+      background: rgba(20, 20, 20, 0.75);
+      border: 2px solid rgba(100, 100, 100, 0.3);
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.6);
+      display: none; /* hidden by default */
+    }
+
+    /* Menu Titles */
+    .cutting-menu h1,
+    .juice-menu h1 {
+      margin-bottom: 20px;
+    }
+
+    /* Item Rows (Cutting vs. Juice) */
+    .cutting-item,
+    .juice-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 5px;
+      transition: 0.3s ease-in-out;
+    }
+
+    /* Images */
+    .cutting-img,
+    .juice-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 5px;
+      object-fit: contain;
+    }
+
+    /* Details Section */
+    .cutting-details,
+    .juice-details {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      flex-grow: 1;
+      margin-left: 10px;
+    }
+
+    .cutting-name,
+    .juice-name {
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .ingredients {
+      font-size: 14px;
+      color: #FFD700;
+      margin-top: 5px;
+      font-weight: bold;
+    }
+
+    /* Buttons */
+    button {
+      background: #007bff;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: 0.3s;
+      border: none;
+    }
+
+    button:hover {
+      background: #0056b3;
+      transform: scale(1.05);
+    }
+
+    /* Close Buttons at the bottom of each menu */
+    #closeCuttingBtn,
+    #closeJuiceBtn {
+      width: 100%;
+      margin-top: 15px;
+      font-size: 16px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <!-- CUTTING MENU -->
+  <div class="cutting-menu" id="cuttingMenu">
+    <h1>🍉 Groovy - Cut Fruit</h1>
+    <div id="cutting-options"></div>
+    <button id="closeCuttingBtn">❌ Close</button>
+  </div>
+
+  <!-- JUICE MENU -->
+  <div class="juice-menu" id="juiceMenu">
+    <h1>🍹 Groovy - Fresh Juice</h1>
+    <div id="juice-options"></div>
+    <button id="closeJuiceBtn">❌ Close</button>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const cuttingMenu = document.getElementById("cuttingMenu");
+      const juiceMenu = document.getElementById("juiceMenu");
+
+      const closeCuttingBtn = document.getElementById("closeCuttingBtn");
+      const closeJuiceBtn = document.getElementById("closeJuiceBtn");
+
+      const cuttingOptions = document.getElementById("cutting-options");
+      const juiceOptions = document.getElementById("juice-options");
+
+      // Hide menus on load
+      cuttingMenu.style.display = "none";
+      juiceMenu.style.display = "none";
+
+      /* ========== IMAGES for Cutting ========== */
+      const cuttingImages = {
+        lemon: "lemon.png",
+        orange: "orange.png",
+        pineapple: "pineapple.png"
+      };
+
+      /* ========== IMAGES for Juices ========== */
+      const juiceImages = {
+        lemonjuice: "lemonjuice.png",
+        orangejuice: "orangejuice.png",
+        pineapplejuice: "pineapplejuice.png"
+      };
+
+      /* ========== Fruit to Slice Mapping ========== */
+      // Key = the name of the whole fruit item in your server
+      // 'sliceName' = the item name for the slices that will be produced
+      const cuttingData = {
+        lemon: { sliceName: "lemonslice" },
+        orange: { sliceName: "orangeslice" },
+        pineapple: { sliceName: "pineappleslice" }
+      };
+
+      /* ========== Juice Recipe Mapping ========== */
+      // Key = final juice item
+      // 'requiredItem' = the slice item needed
+      const juiceData = {
+        lemonjuice: { requiredItem: "lemonslice" },
+        orangejuice: { requiredItem: "orangeslice" },
+        pineapplejuice: { requiredItem: "pineappleslice" }
+      };
+
+      /* ========== Listen for NUI messages from client.lua ========== */
+      window.addEventListener("message", function (event) {
+        if (event.data.action === "openCuttingMenu") {
+          openCuttingMenu();
+        }
+        if (event.data.action === "closeCuttingMenu") {
+          cuttingMenu.style.display = "none";
+        }
+        if (event.data.action === "openJuiceMenu") {
+          openJuiceMenu();
+        }
+        if (event.data.action === "closeJuiceMenu") {
+          juiceMenu.style.display = "none";
+        }
+      });
+
+      /* ========== BUILD CUTTING MENU ========== */
+      function openCuttingMenu() {
+        cuttingMenu.style.display = "block";
+        cuttingOptions.innerHTML = "";
+
+        // For each fruit in cuttingData, build a row
+        Object.keys(cuttingData).forEach((fruit) => {
+          let fruitInfo = cuttingData[fruit];
+          let imageUrl = `./images/${cuttingImages[fruit]}`;
+
+          let itemRow = document.createElement("div");
+          itemRow.classList.add("cutting-item");
+
+          itemRow.innerHTML = `
+            <img src="${imageUrl}" alt="${fruit}" class="cutting-img">
+            <div class="cutting-details">
+              <span class="cutting-name">${fruit.toUpperCase()}</span>
+              <div class="ingredients">Yields: 1x ${fruitInfo.sliceName}</div>
+            </div>
+            <button onclick="cutFruit('${fruit}','${fruitInfo.sliceName}')">🔪 Cut</button>
+          `;
+          cuttingOptions.appendChild(itemRow);
+        });
+      }
+
+      /* ========== BUILD JUICE MENU ========== */
+      function openJuiceMenu() {
+        juiceMenu.style.display = "block";
+        juiceOptions.innerHTML = "";
+
+        // For each juice in juiceData, build a row
+        Object.keys(juiceData).forEach((juiceName) => {
+          let juiceInfo = juiceData[juiceName];
+          let imageUrl = `./images/${juiceImages[juiceName]}`;
+
+          let itemRow = document.createElement("div");
+          itemRow.classList.add("juice-item");
+
+          itemRow.innerHTML = `
+            <img src="${imageUrl}" alt="${juiceName}" class="juice-img">
+            <div class="juice-details">
+              <span class="juice-name">${juiceName.toUpperCase()}</span>
+              <div class="ingredients">Requires: 1x ${juiceInfo.requiredItem}</div>
+            </div>
+            <button onclick="prepareJuice('${juiceName}','${juiceInfo.requiredItem}')">🍹 Prepare</button>
+          `;
+          juiceOptions.appendChild(itemRow);
+        });
+      }
+
+      /* ========== CLOSE BUTTONS ========== */
+      closeCuttingBtn.addEventListener("click", function () {
+        fetch(`https://${GetParentResourceName()}/closeCuttingMenu`, { method: "POST" });
+      });
+
+      closeJuiceBtn.addEventListener("click", function () {
+        fetch(`https://${GetParentResourceName()}/closeJuiceMenu`, { method: "POST" });
+      });
+    });
+
+    /* ========== NUICallback Triggers ========== */
+
+    // Called by the "🔪 Cut" button in the Cutting Menu
+    function cutFruit(fruitName, sliceName) {
+      fetch(`https://${GetParentResourceName()}/cutFruit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fruit: fruitName, sliceItem: sliceName })
+      });
+    }
+
+    // Called by the "🍹 Prepare" button in the Juice Menu
+    function prepareJuice(juiceName, requiredItem) {
+      fetch(`https://${GetParentResourceName()}/prepareJuice`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ juiceType: juiceName, requiredItem: requiredItem })
+      });
+    }
+  </script>
+</body>
+</html>
